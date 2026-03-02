@@ -1,16 +1,3 @@
 {
-  "/(auth)/sign-in/[[...sign-in]]/page": "app/(auth)/sign-in/[[...sign-in]]/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/analytics/me/route": "app/api/analytics/me/route.js",
-  "/api/companies/route": "app/api/companies/route.js",
-  "/api/problems/[id]/route": "app/api/problems/[id]/route.js",
-  "/api/problems/[id]/submissions/route": "app/api/problems/[id]/submissions/route.js",
-  "/api/problems/route": "app/api/problems/route.js",
-  "/api/problems/stats/route": "app/api/problems/stats/route.js",
-  "/api/problems/topics/route": "app/api/problems/topics/route.js",
-  "/api/run/route": "app/api/run/route.js",
-  "/api/submit/route": "app/api/submit/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/questions/[id]/page": "app/dashboard/questions/[id]/page.js",
-  "/dashboard/questions/page": "app/dashboard/questions/page.js"
+  "/page": "app/page.js"
 }
