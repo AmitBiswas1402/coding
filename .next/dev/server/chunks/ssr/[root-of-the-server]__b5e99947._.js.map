@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///C:/workspace/Hackathon/coding/components/shared/Toaster.tsx"],"sourcesContent":["\"use client\";\n\nimport { Toaster as SonnerToaster } from \"sonner\";\n\nexport function Toaster() {\n  return <SonnerToaster position=\"top-center\" richColors />;\n}\n"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIO,SAAS;IACd,qBAAO,8OAAC,mJAAa;QAAC,UAAS;QAAa,UAAU;;;;;;AACxD"}}]
+}
