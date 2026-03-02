@@ -13,7 +13,8 @@
     "seed": "tsx scripts/seed.ts",
     "seed:leetcode": "tsx scripts/seed-leetcode-150.ts",
     "server": "tsx watch server/index.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    "build:docker": "docker build --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --build-arg NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL -t coding-arena ."
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
