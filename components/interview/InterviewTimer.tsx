@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface ContestTimerProps {
-  contestId: string;
+interface InterviewTimerProps {
   endsAt?: string | null;
   onEnd?: () => void;
 }
@@ -19,7 +18,7 @@ function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-export function ContestTimer({ contestId, endsAt = null, onEnd }: ContestTimerProps) {
+export function InterviewTimer({ endsAt = null, onEnd }: InterviewTimerProps) {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [ended, setEnded] = useState(false);
 
@@ -47,24 +46,22 @@ export function ContestTimer({ contestId, endsAt = null, onEnd }: ContestTimerPr
 
   if (remaining <= 0) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-red-400">
-          Contest Ended
-        </span>
-      </div>
+      <span className="inline-flex items-center rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-red-400">
+        Time Up
+      </span>
     );
   }
 
-  const isUrgent = remaining <= 300; // 5 minutes
+  const isUrgent = remaining <= 300;
 
   return (
-    <div
+    <span
       className={cn(
         "font-mono text-xl font-semibold tabular-nums",
         isUrgent && "text-red-500 animate-pulse"
       )}
     >
       {formatTime(remaining)}
-    </div>
+    </span>
   );
 }

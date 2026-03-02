@@ -10,6 +10,9 @@ import {
   BarChart3,
   Zap,
   Shuffle,
+  Sparkles,
+  Target,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +25,13 @@ type Problem = {
   difficulty: number;
   topic: string | null;
   successRate?: number;
+};
+
+type Recommendation = {
+  title: string;
+  topic: string;
+  difficulty: "easy" | "medium" | "hard";
+  reason: string;
 };
 
 type Topic = {
@@ -49,12 +59,6 @@ const navItems = [
     gradient: "from-orange-400 via-red-500 to-pink-600",
   },
   {
-    href: "/dashboard/questions",
-    label: "Problems",
-    icon: Code2,
-    gradient: "from-yellow-400 via-amber-500 to-orange-600",
-  },
-  {
     href: "/dashboard/analytics",
     label: "Analytics",
     icon: BarChart3,
@@ -72,6 +76,10 @@ export default function DashboardPage() {
   const [difficultyFilter, setDifficultyFilter] = useState<
     "all" | "easy" | "medium" | "hard"
   >("all");
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recsSummary, setRecsSummary] = useState("");
+  const [recsLoading, setRecsLoading] = useState(false);
+  const [recsLoaded, setRecsLoaded] = useState(false);
 
   // Fetch problems
   useEffect(() => {
@@ -135,6 +143,23 @@ export default function DashboardPage() {
     return filtered;
   }, [problems, difficultyFilter, searchQuery]);
 
+  async function fetchRecommendations() {
+    if (recsLoading) return;
+    setRecsLoading(true);
+    try {
+      const res = await fetch("/api/ai/recommend");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setRecommendations(data.recommendations || []);
+      setRecsSummary(data.summary || "");
+      setRecsLoaded(true);
+    } catch (err) {
+      console.error("Recommendation error:", err);
+    } finally {
+      setRecsLoading(false);
+    }
+  }
+
   function handleShuffle() {
     if (filteredProblems.length > 0) {
       const randomIndex = Math.floor(Math.random() * filteredProblems.length);
@@ -147,7 +172,7 @@ export default function DashboardPage() {
     <div className="min-h-[calc(100vh-3.5rem)] px-6 py-8 bg-[#1a1a1a]">
       <div className="w-full max-w-7xl mx-auto">
         {/* Feature Cards */}
-        <div className="grid grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-4 gap-4 mb-8">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -188,6 +213,76 @@ export default function DashboardPage() {
               </Link>
             );
           })}
+        </div>
+
+        {/* AI Recommendations Section */}
+        <div className="mb-8">
+          <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-[#1a1a1a] to-[#1a1a1a] p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-purple-500/20 p-2">
+                  <Sparkles className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Recommended For You</h2>
+                  <p className="text-xs text-muted-foreground">AI-powered picks based on your skill gaps</p>
+                </div>
+              </div>
+              <Button
+                onClick={fetchRecommendations}
+                disabled={recsLoading}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+              >
+                {recsLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analyzing…</>
+                ) : recsLoaded ? (
+                  <><Sparkles className="h-4 w-4 mr-2" /> Refresh</>
+                ) : (
+                  <><Target className="h-4 w-4 mr-2" /> Get Recommendations</>
+                )}
+              </Button>
+            </div>
+
+            {recsLoaded && recsSummary && (
+              <p className="text-sm text-purple-300/80 mb-4 leading-relaxed">{recsSummary}</p>
+            )}
+
+            {recsLoaded && recommendations.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {recommendations.map((rec, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-[#2d2d2d] bg-[#1f1f1f] p-4 hover:border-purple-500/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider",
+                          rec.difficulty === "easy"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : rec.difficulty === "medium"
+                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                        )}
+                      >
+                        {rec.difficulty}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{rec.topic}</span>
+                    </div>
+                    <h4 className="text-sm font-medium text-white mb-1 leading-tight">{rec.title}</h4>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{rec.reason}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!recsLoaded && !recsLoading && (
+              <div className="text-center py-6 text-sm text-muted-foreground">
+                Click &quot;Get Recommendations&quot; to receive personalized problem suggestions
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Problems Section */}

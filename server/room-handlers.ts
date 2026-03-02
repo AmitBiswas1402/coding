@@ -12,6 +12,28 @@ const roomParticipantsMap = new Map<string, RoomParticipant[]>();
 const roomCreatorMap = new Map<string, string>();
 const roomCodeToIdMap = new Map<string, string>();
 
+// Track per-user run/submit/solved counts per room
+export type UserRaceStat = {
+  runs: number;
+  submits: number;
+  solved: boolean;
+  solvedAt: number | null;
+};
+const roomUserStats = new Map<string, Map<string, UserRaceStat>>();
+
+function ensureUserStat(roomId: string, userId: string): UserRaceStat {
+  if (!roomUserStats.has(roomId)) roomUserStats.set(roomId, new Map());
+  const roomMap = roomUserStats.get(roomId)!;
+  if (!roomMap.has(userId)) {
+    roomMap.set(userId, { runs: 0, submits: 0, solved: false, solvedAt: null });
+  }
+  return roomMap.get(userId)!;
+}
+
+export function getRoomUserStats(roomId: string): Map<string, UserRaceStat> | undefined {
+  return roomUserStats.get(roomId);
+}
+
 export function getRoomParticipants(roomId: string): RoomParticipant[] {
   return roomParticipantsMap.get(roomId) ?? [];
 }
@@ -136,19 +158,48 @@ export function registerRoomHandlers(io: Server): void {
     socket.on("run_code", (payload: { roomId: string }) => {
       const roomId = payload?.roomId;
       if (!roomId) return;
+      const stat = ensureUserStat(roomId, userId);
+      stat.runs++;
       socket.to(roomId).emit("user_ran_code", { userId, userName });
     });
 
     socket.on("submit_code", (payload: { roomId: string }) => {
       const roomId = payload?.roomId;
       if (!roomId) return;
+      const stat = ensureUserStat(roomId, userId);
+      stat.submits++;
       socket.to(roomId).emit("user_submitted", { userId, userName });
     });
 
     socket.on("user_solved", (payload: { roomId: string }) => {
       const roomId = payload?.roomId;
       if (!roomId) return;
+      const stat = ensureUserStat(roomId, userId);
+      if (!stat.solved) {
+        stat.solved = true;
+        stat.solvedAt = Date.now();
+      }
       raceNs.to(roomId).emit("user_solved", { userId, userName });
+    });
+
+    // Return collected race stats to the requester
+    socket.on("request_race_summary", (payload: { roomId: string }) => {
+      const roomId = payload?.roomId;
+      if (!roomId) return;
+      const stats = roomUserStats.get(roomId);
+      const participants = roomParticipantsMap.get(roomId) ?? [];
+      const summary = participants.map((p) => {
+        const s = stats?.get(p.userId);
+        return {
+          userId: p.userId,
+          userName: p.userName,
+          runs: s?.runs ?? 0,
+          submits: s?.submits ?? 0,
+          solved: s?.solved ?? false,
+          solvedAt: s?.solvedAt ?? null,
+        };
+      });
+      socket.emit("race_summary", { roomId, participants: summary });
     });
 
     socket.on("disconnect", () => {

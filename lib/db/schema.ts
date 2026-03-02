@@ -148,20 +148,42 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 
-export const contestScores = pgTable("contest_scores", {
+export const contestScores = pgTable(
+  "contest_scores",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contestId: uuid("contest_id")
+      .notNull()
+      .references(() => contests.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    problemId: uuid("problem_id")
+      .notNull()
+      .references(() => problems.id, { onDelete: "cascade" }),
+    submissionId: uuid("submission_id").references(() => submissions.id),
+    score: integer("score").notNull(),
+    solvedAt: timestamp("solved_at").notNull(),
+  },
+  (t) => [uniqueIndex("contest_score_unique_idx").on(t.contestId, t.userId, t.problemId)]
+);
+
+export const aiEvaluations = pgTable("ai_evaluations", {
   id: uuid("id").primaryKey().defaultRandom(),
-  contestId: uuid("contest_id")
+  submissionId: uuid("submission_id")
     .notNull()
-    .references(() => contests.id, { onDelete: "cascade" }),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  problemId: uuid("problem_id")
-    .notNull()
-    .references(() => problems.id, { onDelete: "cascade" }),
-  submissionId: uuid("submission_id").references(() => submissions.id),
-  score: integer("score").notNull(),
-  solvedAt: timestamp("solved_at").notNull(),
+    .references(() => submissions.id, { onDelete: "cascade" })
+    .unique(),
+  correctnessScore: integer("correctness_score").notNull(),
+  timeComplexity: text("time_complexity").notNull(),
+  spaceComplexity: text("space_complexity").notNull(),
+  optimizationScore: integer("optimization_score").notNull(),
+  readabilityScore: integer("readability_score").notNull(),
+  edgeCaseScore: integer("edge_case_score").notNull(),
+  issues: jsonb("issues").$type<string[]>().notNull().default([]),
+  improvements: jsonb("improvements").$type<string[]>().notNull().default([]),
+  overallFeedback: text("overall_feedback").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const aiGeneratedQuestions = pgTable("ai_generated_questions", {
@@ -205,6 +227,7 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
   problem: one(problems, { fields: [submissions.problemId], references: [problems.id] }),
   room: one(rooms, { fields: [submissions.roomId], references: [rooms.id] }),
   contest: one(contests, { fields: [submissions.contestId], references: [contests.id] }),
+  aiEvaluation: one(aiEvaluations, { fields: [submissions.id], references: [aiEvaluations.submissionId] }),
 }));
 
 export const contestsRelations = relations(contests, ({ many }) => ({
@@ -233,9 +256,60 @@ export const contestScoresRelations = relations(contestScores, ({ one }) => ({
   submission: one(submissions, { fields: [contestScores.submissionId], references: [submissions.id] }),
 }));
 
+export const aiEvaluationsRelations = relations(aiEvaluations, ({ one }) => ({
+  submission: one(submissions, { fields: [aiEvaluations.submissionId], references: [submissions.id] }),
+}));
+
 export const aiGeneratedQuestionsRelations = relations(
   aiGeneratedQuestions,
   ({ one }) => ({
     problem: one(problems, { fields: [aiGeneratedQuestions.problemId], references: [problems.id] }),
   })
 );
+
+// ── Interview Mode ──
+
+export const interviewStatusEnum = pgEnum("interview_status", [
+  "active",
+  "completed",
+  "expired",
+]);
+
+export const interviewSessions = pgTable("interview_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  level: text("level").notNull(),
+  companyCategory: text("company_category").notNull(),
+  topic: text("topic"),
+  question: jsonb("question").notNull(),
+  expectedTimeMinutes: integer("expected_time_minutes").notNull(),
+  status: interviewStatusEnum("status").notNull().default("active"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const interviewResults = pgTable("interview_results", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => interviewSessions.id, { onDelete: "cascade" })
+    .unique(),
+  code: text("code").notNull(),
+  language: text("language").notNull(),
+  solveTimeMinutes: integer("solve_time_minutes").notNull(),
+  runAttempts: integer("run_attempts").notNull().default(0),
+  scoresJson: jsonb("scores_json").notNull(),
+  hireRecommendation: text("hire_recommendation").notNull(),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+});
+
+export const interviewSessionsRelations = relations(interviewSessions, ({ one }) => ({
+  user: one(users, { fields: [interviewSessions.userId], references: [users.id] }),
+  result: one(interviewResults, { fields: [interviewSessions.id], references: [interviewResults.sessionId] }),
+}));
+
+export const interviewResultsRelations = relations(interviewResults, ({ one }) => ({
+  session: one(interviewSessions, { fields: [interviewResults.sessionId], references: [interviewSessions.id] }),
+}));

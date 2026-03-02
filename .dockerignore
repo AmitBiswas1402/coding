@@ -1,0 +1,59 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build output
+.next
+out
+dist
+build
+
+# Testing
+coverage
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Dev tooling
+.turbo
+tsconfig.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Drizzle studio / local
+drizzle/migrations
+
+# Scripts (optional, not needed in prod image)
+scripts
+
+# Misc
+README.md
+IMPLEMENTATION_PLAN.md
+*.md
+LICENSE

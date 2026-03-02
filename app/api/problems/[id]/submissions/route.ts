@@ -6,12 +6,13 @@ import { eq, desc, and } from "drizzle-orm";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getOrCreateUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const problemId = params.id;
+  const { id } = await params;
+  const problemId = id;
   if (!problemId) {
     return NextResponse.json({ error: "Problem ID required" }, { status: 400 });
   }
