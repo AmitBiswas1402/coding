@@ -211,36 +211,6 @@ docker rmi keep-coding
 docker build -t keep-coding .
 ```
 
----
-
-## ☁️ Vercel Deployment
-
-The Next.js app is deployable to Vercel. The Socket.IO server must be hosted separately (Railway, Render, or Fly.io).
-
-**1. Deploy Next.js to Vercel**
-
-Push to GitHub, import at [vercel.com](https://vercel.com), and add these env vars in the dashboard:
-
-```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-CLERK_SECRET_KEY
-NEXT_PUBLIC_CLERK_SIGN_IN_URL         = /sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL         = /sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL   = /dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL   = /dashboard
-DATABASE_URL
-OPENROUTER_API_KEY
-NEXT_PUBLIC_SOCKET_URL                = https://your-socket-server.railway.app
-```
-
-**2. Deploy Socket server to Railway**
-
-- New project → Deploy from GitHub → set start command: `npx tsx server/index.ts`
-- Add env vars: `CORS_ORIGIN=https://your-app.vercel.app`, `DATABASE_URL`, `SOCKET_PORT=3001`
-- Copy the Railway public URL → set as `NEXT_PUBLIC_SOCKET_URL` in Vercel → Redeploy
-
----
-
 ## 📦 What Was Built & Added
 
 ### UI & Design
